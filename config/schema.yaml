@@ -1,0 +1,35 @@
+columns : 
+  - 'Unnamed: 0'
+  - Company
+  - TypeName
+  - Inches
+  - ScreenResolution
+  - Cpu
+  - Ram
+  - Memory
+  - Gpu
+  - OpSys
+  - Weight
+  - Price
+
+
+target_column :
+  - Price
+
+
+columns_after_transformation :
+  - Company
+  - TypeName
+  - Ram
+  - Weight	
+  - Price
+  - Touchscreen
+  - IPS
+  - ppi
+  - Cpu_Category
+  - SSD
+  - HDD
+  - Flash_Storage
+  - Hybrid	
+  - Gpu_category
+  - categorize_opsys
