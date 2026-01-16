@@ -7,6 +7,15 @@ ARTIFACT_DIR = 'artifact'
 SCHEMA_FILE_PATH = os.path.join('config','schema.yaml')
 
 
+TRAIN_FILE_NAME= 'train.csv'
+TEST_FILE_NAME= 'test.csv'
+PREPROCSSING_OBJECT_FILE_NAME = "preprocessing.pkl"
+
+
+
+
+
+
 # for mongo db related
 DATABASE_NAME = 'laptop_price_dataset_DB'
 COLLECTION_NAME= 'laptop_price_dataset'
@@ -28,6 +37,13 @@ TRAIN_TEST_SPLIT_RATIO = 0.2
 DATA_VALIDATION_DIR_NAME = 'data_validation'
 
 
+
+
+"data Transformation related constants"
+
+DATA_TRANSFORMATION_DIR_NAME= 'data_transformation'
+DATA_TRANSFORMATION_TRANSFORMED_DATA_DIR = "transformed"
+DATA_TRANSFORMATION_TRANSFORMED_OBJECT_DIR  =  "transformed_object"
 
 
 

@@ -2,15 +2,18 @@ import sys
 
 from src.Data_Ingestion_component import DataIngestion
 from src.Data_validation_component import DataValidation
+from src.Data_transformation_component import DataTransformation
 
 from src.entity_component.config_entity import (
     DataIngestionConfig,
     DataValidationConfig,
+    DataTransformationConfig
 )
 
 from src.entity_component.artifact_entity import (
     DataIngestionArtifact,
     DataValidationArtifact,
+    DataTransformationArtifact
 )
 
 from src.logging_component import logger
@@ -32,9 +35,13 @@ class TrainingPipeline:
 
             self.data_ingestion_config = DataIngestionConfig()
             self.data_validation_config = DataValidationConfig()
+            self.data_transformation_config = DataTransformationConfig()
 
         except Exception as e:
             raise MyException(e, sys)
+        
+
+
 
     def start_data_ingestion(self) -> DataIngestionArtifact:
         """
@@ -56,6 +63,8 @@ class TrainingPipeline:
 
         except Exception as e:
             raise MyException(e, sys) from e
+
+
 
     def start_data_validation(
         self,
@@ -83,6 +92,23 @@ class TrainingPipeline:
         except Exception as e:
             raise MyException(e, sys) from e
 
+
+
+       
+
+       
+    def start_data_transformation(self, data_ingestion_artifact: DataIngestionArtifact) -> DataTransformationArtifact:
+        try:
+            data_transformation = DataTransformation(
+                data_ingestion_artifact=data_ingestion_artifact,
+                data_transformation_config=self.data_transformation_config
+            )
+            return data_transformation.initiate_data_transformation()
+        except Exception as e:
+            raise MyException(e, sys)
+        
+
+        
     def run_pipeline(self):
         """
         Runs the complete training pipeline sequentially.
@@ -102,11 +128,20 @@ class TrainingPipeline:
                 data_ingestion_artifact=data_ingestion_artifact,
                 data_validation_config=self.data_validation_config,
             )
+           
 
             if not data_validation_artifact.validation_status:
                 raise Exception(
                     f"Data validation failed: {data_validation_artifact.message}"
                 )
+            
+
+            #================================
+            # Stage 3: Data Transformation
+            #=================================
+
+            data_transformation_artifact = self.start_data_transformation(data_ingestion_artifact)
+
 
             logger.info("Training pipeline completed successfully")
 

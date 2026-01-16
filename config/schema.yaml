@@ -1,5 +1,4 @@
 columns:
- 
   - Company
   - TypeName
   - Inches
@@ -12,10 +11,8 @@ columns:
   - Weight
   - Price
 
-
 target_column:
   - Price
-
 
 columns_after_transformation:
   - Company
@@ -31,5 +28,23 @@ columns_after_transformation:
   - HDD
   - Flash_Storage
   - Hybrid
+  - Gpu_category
+  - categorize_opsys
+
+numerical_features:
+  - Ram
+  - Weight
+  - Touchscreen
+  - IPS
+  - ppi
+  - SSD
+  - HDD
+  - Flash_Storage
+  - Hybrid
+
+categorical_features:
+  - Company
+  - TypeName
+  - Cpu_Category
   - Gpu_category
   - categorize_opsys
