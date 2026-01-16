@@ -11,7 +11,7 @@ from sklearn.model_selection import train_test_split
 
 
 class DataIngestion:
-    def __init__(self, data_ingestion_config=DataIngestionConfig()):
+    def __init__(self, data_ingestion_config=DataIngestionConfig):
         """
         Initialize DataIngestion class with config and artifact.
         """
@@ -35,13 +35,10 @@ class DataIngestion:
             dataFrame = gf.get_data_in_correct_form(
                 database_name=DATABASE_NAME, collection_name=COLLECTION_NAME
             )
-            logger.info(f"Shape of dataframe before dropping _id: {dataFrame.shape}")
+            logger.info(f"Shape of dataframe : {dataFrame.shape}")
 
-            # Drop MongoDB _id column if present
-            if "_id" in dataFrame.columns:
-                dataFrame = dataFrame.drop(columns=["_id"])
-                logger.info(f"Shape of dataframe after dropping _id: {dataFrame.shape}")
-
+           
+           
             # Step 2: Ensure feature store directory exists
             feature_store_dir = self.data_ingestion_config.data_ingestion_feature_store_dir
             os.makedirs(feature_store_dir, exist_ok=True)

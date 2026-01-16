@@ -34,12 +34,18 @@ class GetData:
             df = pd.DataFrame(list(collection.find()))
 
             # Drop 'Unnamed: 0' column if it exists
+            logger.debug(f'these are the columns : {df.columns}')
             if 'Unnamed: 0' in df.columns:
                 df.drop(columns='Unnamed: 0', inplace=True)
 
             if '_id' in df.columns:
-                df.drop(columns='_id' , inplace=True)    
+                df.drop(columns='_id' , inplace=True)  
 
+
+            logger.debug(f'these are the columns after dropping : {df.columns}')    
+
+
+ 
             logger.info(f"Data fetched successfully. Number of records: {len(df)}")
             return df
 

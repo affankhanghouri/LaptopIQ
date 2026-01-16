@@ -1,5 +1,5 @@
-columns : 
-  - 'Unnamed: 0'
+columns:
+ 
   - Company
   - TypeName
   - Inches
@@ -13,15 +13,15 @@ columns :
   - Price
 
 
-target_column :
+target_column:
   - Price
 
 
-columns_after_transformation :
+columns_after_transformation:
   - Company
   - TypeName
   - Ram
-  - Weight	
+  - Weight
   - Price
   - Touchscreen
   - IPS
@@ -30,6 +30,6 @@ columns_after_transformation :
   - SSD
   - HDD
   - Flash_Storage
-  - Hybrid	
+  - Hybrid
   - Gpu_category
   - categorize_opsys
