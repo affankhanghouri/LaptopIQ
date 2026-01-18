@@ -5,13 +5,15 @@ from src.Data_validation_component import DataValidation
 from src.Data_transformation_component import DataTransformation
 from src.Model_Trainer_component import ModelTrainer
 from src.Model_evaluation_component import ModelEvaluation
+from src.Model_Pusher_component import ModelPusher
 
 from src.entity_component.config_entity import (
     DataIngestionConfig,
     DataValidationConfig,
     DataTransformationConfig,
     ModelTrainerConfig,
-    ModelEvaluationConfig
+    ModelEvaluationConfig,
+    ModelPusherConfig
 )
 
 from src.entity_component.artifact_entity import (
@@ -19,7 +21,8 @@ from src.entity_component.artifact_entity import (
     DataValidationArtifact,
     DataTransformationArtifact,
     ModelTrainerArtifact , 
-    ModelEvaluationArtifact
+    ModelEvaluationArtifact,
+    ModelPusherArtifact
     
 )
 
@@ -45,6 +48,7 @@ class TrainingPipeline:
             self.data_transformation_config = DataTransformationConfig()
             self.model_trainer_config = ModelTrainerConfig()
             self.model_evaluation_config = ModelEvaluationConfig()
+            self.model_pusher_config = ModelPusherConfig()
 
         except Exception as e:
             raise MyException(e, sys)
@@ -146,7 +150,21 @@ class TrainingPipeline:
             model_evaluation_artifact = model_evaluation.initiate_model_evaluation()
             return model_evaluation_artifact
         except Exception as e:
-            raise MyException(e, sys)     
+            raise MyException(e, sys)  
+
+        
+    def start_model_pusher(self, model_evaluation_artifact: ModelEvaluationArtifact) -> ModelPusherArtifact:
+        """
+        This method of TrainPipeline class is responsible for starting model pushing
+        """
+        try:
+            model_pusher = ModelPusher(model_evaluation_artifact=model_evaluation_artifact,
+                                       model_pusher_config=self.model_pusher_config
+                                       )
+            model_pusher_artifact = model_pusher.initiate_model_pusher()
+            return model_pusher_artifact
+        except Exception as e:
+            raise MyException(e, sys)       
     
         
 
@@ -200,8 +218,20 @@ class TrainingPipeline:
             model_evaluation_artifact = self.start_model_evaluation(data_ingestion_artifact=data_ingestion_artifact,
                                                                     model_trainer_artifact=model_trainer_artifact)
             
+            
+              
+            if not model_evaluation_artifact.is_model_accepted:
+                logger.info(f"Model not accepted.")
+                return None
+            
+
+            model_pusher_artifact = self.start_model_pusher(model_evaluation_artifact=model_evaluation_artifact)
 
 
+            logger.info(f"Pipeline completed successfully.")
+
+            
+        
 
 
             logger.info("Training pipeline completed successfully")
