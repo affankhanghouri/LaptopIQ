@@ -1,43 +1,80 @@
-
 from src.logging_component import logger
 from pandas import DataFrame
-
 from sklearn.pipeline import Pipeline
 from src.exception_component import MyException
 import sys
-
-
+from src.Data_transformation_component import DataTransformation
+import numpy as np
 
 class ModelPredictor:
+    """
+    Generic wrapper for ML models to handle feature engineering,
+    preprocessing, and prediction safely.
+    """
     def __init__(self, preprocessing_object: Pipeline, trained_model_object: object):
         """
-        A generic wrapper for ML models to handle transformation and prediction.
-        :param preprocessing_object: Input preprocessing Pipeline object (e.g., sklearn Pipeline)
-        :param trained_model_object: Trained model object (e.g., XGBoost, Random Forest)
+        :param preprocessing_object: Preprocessing pipeline (sklearn Pipeline / ColumnTransformer)
+        :param trained_model_object: Trained ML model (XGBoost, RandomForest, etc.)
         """
         self.preprocessing_object = preprocessing_object
         self.trained_model_object = trained_model_object
 
-    def predict(self, dataframe: DataFrame) -> object:
+    def predict(self, dataframe: DataFrame) -> np.ndarray:
         """
-        Transforms raw input data and returns predictions.
+        Predict using the trained model and preprocessing pipeline.
+        Handles missing columns in prediction data.
         """
-        # Dynamically get the class name for cleaner logging
-        class_name = self.__class__.__name__
-        logger.info(f"Entered predict method of {class_name}")
+        logger.info(f"Entered predict method of {self.__class__.__name__}")
 
         try:
-            logger.info("Applying preprocessing transformations to input data")
+            # -----------------------------
+            # Feature engineering
+            # -----------------------------
+            logger.info("Applying feature engineering to input data")
+            dataframe = DataTransformation.feature_engineering_for_prediction(
+                data=dataframe
+            )
+
+            # -----------------------------
+            # Ensure all required columns exist
+            # -----------------------------
+            required_columns = (
+                DataTransformation.schema["numerical_features"] +
+                DataTransformation.schema["categorical_features"]
+            )
+
+            for col in required_columns:
+                if col not in dataframe.columns:
+                    if col in DataTransformation.schema["categorical_features"]:
+                        dataframe[col] = "unknown"
+                    else:
+                        dataframe[col] = 0
+
+            # Reorder columns exactly as in training
+            dataframe = dataframe[required_columns]
+
+            # -----------------------------
+            # Preprocessing
+            # -----------------------------
+            logger.info("Applying preprocessing transformations")
             transformed_features = self.preprocessing_object.transform(dataframe)
 
+            # -----------------------------
+            # Prediction
+            # -----------------------------
             logger.info("Generating predictions from the trained model")
             predictions = self.trained_model_object.predict(transformed_features)
 
-            logger.info(f"Successfully completed prediction in {class_name}")
+            # -----------------------------
+            # Reverse log transform
+            # -----------------------------
+            predictions = np.exp(predictions)
+
+            logger.info("Successfully completed prediction")
             return predictions
 
         except Exception as e:
-            # sys is used here to provide detailed traceback information
+            logger.error(f"Prediction failed: {e}")
             raise MyException(e, sys) from e
 
     def __repr__(self):

@@ -37,6 +37,11 @@ class DataTransformation:
     Notebook-faithful, schema-driven data transformation.
     """
 
+    # ==================================================
+    # CLASS-LEVEL SCHEMA (used by static methods)
+    # ==================================================
+    schema = read_yaml_file(SCHEMA_FILE_PATH)
+
     def __init__(
         self,
         data_transformation_config: DataTransformationConfig,
@@ -45,14 +50,11 @@ class DataTransformation:
         try:
             self.config = data_transformation_config
             self.ingestion_artifact = data_ingestion_artifact
-            self.schema = read_yaml_file(SCHEMA_FILE_PATH)
-
             logger.info("DataTransformation initialized")
-
         except Exception as e:
             raise MyException(e, sys)
 
-    # --------------------------------------------------
+    # ==================================================
     @staticmethod
     def read_data(file_path: str) -> DataFrame:
         try:
@@ -60,19 +62,25 @@ class DataTransformation:
         except Exception as e:
             raise MyException(e, sys)
 
-    # --------------------------------------------------
-    def apply_custom_feature_engineering(self, data: DataFrame) -> DataFrame:
+    # ==================================================
+    # TRAINING FEATURE ENGINEERING (UNCHANGED)
+    # ==================================================
+    @staticmethod
+    def apply_custom_feature_engineering(data: DataFrame) -> DataFrame:
         """
         EXACTLY mirrors laptop.ipynb feature engineering.
+        TRAINING ONLY (Price is required).
         """
         try:
-            logger.info("Applying feature engineering (notebook-aligned)")
+            logger.info("Applying feature engineering (training)")
+
+            data = data.copy()
 
             # Ram & Weight
-            data['Ram'] = data['Ram'].str.replace('GB', '').astype(int)
-            data['Weight'] = data['Weight'].str.replace('kg', '').astype(float)
+            data['Ram'] = data['Ram'].str.replace('GB', '', regex=False).astype(int)
+            data['Weight'] = data['Weight'].str.replace('kg', '', regex=False).astype(float)
 
-            # IQR outlier removal
+            # IQR outlier removal (uses Price)
             Q1 = data['Price'].quantile(0.25)
             Q3 = data['Price'].quantile(0.75)
             IQR = Q3 - Q1
@@ -99,47 +107,110 @@ class DataTransformation:
                 / data['Inches']
             )
 
-            data.drop(
-                columns=['ScreenResolution', 'X_res', 'Y_res', 'Inches'],
-                inplace=True
+            data = data.drop(
+                columns=['ScreenResolution', 'X_res', 'Y_res', 'Inches']
             )
 
             # CPU
             data['Cpu_Category'] = data['Cpu'].apply(categorize_cpu)
-            data.drop(columns=['Cpu'], inplace=True)
+            data = data.drop(columns=['Cpu'])
 
             # Memory
             data['SSD'] = data['Memory'].apply(lambda x: extract_memory(x, 'ssd'))
             data['HDD'] = data['Memory'].apply(lambda x: extract_memory(x, 'hdd'))
             data['Flash_Storage'] = data['Memory'].apply(lambda x: extract_memory(x, 'flash'))
             data['Hybrid'] = data['Memory'].apply(lambda x: extract_memory(x, 'hybrid'))
-            data.drop(columns=['Memory'], inplace=True)
+            data = data.drop(columns=['Memory'])
 
-            # GPU
+            # GPU (filtering allowed in training)
             data['Gpu_category'] = data['Gpu'].apply(categorize_gpu)
             data = data[data['Gpu_category'] != 'other']
-            data.drop(columns=['Gpu'], inplace=True)
+            data = data.drop(columns=['Gpu'])
 
             # OS
             data['categorize_opsys'] = data['OpSys'].apply(categorize_opsys)
-            data.drop(columns=['OpSys'], inplace=True)
+            data = data.drop(columns=['OpSys'])
 
             # Schema enforcement
-            data = data[self.schema["columns_after_transformation"]]
+            data = data[DataTransformation.schema["columns_after_transformation"]]
 
-            return data
+            return data.reset_index(drop=True)
 
         except Exception as e:
             raise MyException(e, sys)
 
-    # --------------------------------------------------
-    def get_data_transformer_object(self) -> ColumnTransformer:
+    # ==================================================
+    # PREDICTION FEATURE ENGINEERING (SAFE)
+    # ==================================================
+    @staticmethod
+    def feature_engineering_for_prediction(data: DataFrame) -> DataFrame:
         """
-        Preprocessing exactly as used in notebook.
+        Feature engineering for inference.
+        Does NOT use Price.
+        Does NOT drop rows.
         """
         try:
-            num_features = self.schema["numerical_features"]
-            cat_features = self.schema["categorical_features"]
+            logger.info("Applying feature engineering (prediction)")
+
+            data = data.copy()
+
+            # Ram & Weight
+            data['Ram'] = data['Ram'].str.replace('GB', '', regex=False).astype(int)
+            data['Weight'] = data['Weight'].str.replace('kg', '', regex=False).astype(float)
+
+            # Screen
+            data['Touchscreen'] = data['ScreenResolution'].apply(
+                lambda x: 1 if 'Touchscreen' in x else 0
+            )
+            data['IPS'] = data['ScreenResolution'].apply(
+                lambda x: 1 if 'IPS' in x else 0
+            )
+
+            res = data['ScreenResolution'].str.split('x', expand=True)
+            data['X_res'] = res[0].str.extract(r'(\d+)$').astype(int)
+            data['Y_res'] = res[1].astype(int)
+
+            data['ppi'] = (
+                ((data['X_res'] ** 2 + data['Y_res'] ** 2) ** 0.5)
+                / data['Inches']
+            )
+
+            data = data.drop(
+                columns=['ScreenResolution', 'X_res', 'Y_res', 'Inches']
+            )
+
+            # CPU
+            data['Cpu_Category'] = data['Cpu'].apply(categorize_cpu)
+            data = data.drop(columns=['Cpu'])
+
+            # Memory
+            data['SSD'] = data['Memory'].apply(lambda x: extract_memory(x, 'ssd'))
+            data['HDD'] = data['Memory'].apply(lambda x: extract_memory(x, 'hdd'))
+            data['Flash_Storage'] = data['Memory'].apply(lambda x: extract_memory(x, 'flash'))
+            data['Hybrid'] = data['Memory'].apply(lambda x: extract_memory(x, 'hybrid'))
+            data = data.drop(columns=['Memory'])
+
+            # GPU (NO FILTERING)
+            data['Gpu_category'] = data['Gpu'].apply(categorize_gpu)
+            data = data.drop(columns=['Gpu'])
+
+            # OS
+            data['categorize_opsys'] = data['OpSys'].apply(categorize_opsys)
+            data = data.drop(columns=['OpSys'])
+
+            # Schema enforcement
+            data = data[DataTransformation.schema["columns_after_transformation_for_prediction"]]
+
+            return data.reset_index(drop=True)
+
+        except Exception as e:
+            raise MyException(e, sys)
+
+    # ==================================================
+    def get_data_transformer_object(self) -> ColumnTransformer:
+        try:
+            num_features = DataTransformation.schema["numerical_features"]
+            cat_features = DataTransformation.schema["categorical_features"]
 
             num_pipeline = Pipeline(
                 steps=[("scaler", StandardScaler())]
@@ -159,21 +230,18 @@ class DataTransformation:
         except Exception as e:
             raise MyException(e, sys)
 
-    # --------------------------------------------------
+    # ==================================================
     def initiate_data_transformation(self) -> DataTransformationArtifact:
-        """
-        Full transformation pipeline (train + test).
-        """
         try:
             logger.info("Starting data transformation")
 
             train_df = self.read_data(self.ingestion_artifact.trained_file_path)
             test_df = self.read_data(self.ingestion_artifact.test_file_path)
 
-            train_df = self.apply_custom_feature_engineering(train_df)
-            test_df = self.apply_custom_feature_engineering(test_df)
+            train_df = DataTransformation.apply_custom_feature_engineering(train_df)
+            test_df = DataTransformation.apply_custom_feature_engineering(test_df)
 
-            target = self.schema["target_column"][0]
+            target = DataTransformation.schema["target_column"][0]
 
             X_train = train_df.drop(columns=[target])
             y_train = np.log(train_df[target])

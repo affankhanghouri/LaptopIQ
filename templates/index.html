@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laptop Price Predictor</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>💻 Laptop Price Predictor</h1>
+            <p>Enter laptop specifications to get an estimated price</p>
+        </header>
+
+        <!-- Prediction Result -->
+        {% if prediction %}
+        <div class="result success">
+            <h2>💰 Estimated Price</h2>
+            <p class="price">${{ prediction }}</p>
+        </div>
+        {% endif %}
+
+        <!-- Error Message -->
+        {% if error %}
+        <div class="result error">
+            <h2>❌ Error</h2>
+            <p>{{ error }}</p>
+        </div>
+        {% endif %}
+
+        <!-- Prediction Form -->
+        <form action="/predict" method="post" class="prediction-form">
+            
+            <!-- Row 1: Company & Type -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="Company">Company *</label>
+                    <select name="Company" id="Company" required>
+                        <option value="">Select Brand</option>
+                        <option value="Apple" {% if form_data and form_data.Company == 'Apple' %}selected{% endif %}>Apple</option>
+                        <option value="HP" {% if form_data and form_data.Company == 'HP' %}selected{% endif %}>HP</option>
+                        <option value="Dell" {% if form_data and form_data.Company == 'Dell' %}selected{% endif %}>Dell</option>
+                        <option value="Lenovo" {% if form_data and form_data.Company == 'Lenovo' %}selected{% endif %}>Lenovo</option>
+                        <option value="Asus" {% if form_data and form_data.Company == 'Asus' %}selected{% endif %}>Asus</option>
+                        <option value="Acer" {% if form_data and form_data.Company == 'Acer' %}selected{% endif %}>Acer</option>
+                        <option value="MSI" {% if form_data and form_data.Company == 'MSI' %}selected{% endif %}>MSI</option>
+                        <option value="Toshiba" {% if form_data and form_data.Company == 'Toshiba' %}selected{% endif %}>Toshiba</option>
+                        <option value="Samsung" {% if form_data and form_data.Company == 'Samsung' %}selected{% endif %}>Samsung</option>
+                        <option value="Razer" {% if form_data and form_data.Company == 'Razer' %}selected{% endif %}>Razer</option>
+                        <option value="Mediacom" {% if form_data and form_data.Company == 'Mediacom' %}selected{% endif %}>Mediacom</option>
+                        <option value="Microsoft" {% if form_data and form_data.Company == 'Microsoft' %}selected{% endif %}>Microsoft</option>
+                        <option value="Xiaomi" {% if form_data and form_data.Company == 'Xiaomi' %}selected{% endif %}>Xiaomi</option>
+                        <option value="Vero" {% if form_data and form_data.Company == 'Vero' %}selected{% endif %}>Vero</option>
+                        <option value="Chuwi" {% if form_data and form_data.Company == 'Chuwi' %}selected{% endif %}>Chuwi</option>
+                        <option value="Google" {% if form_data and form_data.Company == 'Google' %}selected{% endif %}>Google</option>
+                        <option value="Fujitsu" {% if form_data and form_data.Company == 'Fujitsu' %}selected{% endif %}>Fujitsu</option>
+                        <option value="LG" {% if form_data and form_data.Company == 'LG' %}selected{% endif %}>LG</option>
+                        <option value="Huawei" {% if form_data and form_data.Company == 'Huawei' %}selected{% endif %}>Huawei</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="TypeName">Laptop Type *</label>
+                    <select name="TypeName" id="TypeName" required>
+                        <option value="">Select Type</option>
+                        <option value="Notebook" {% if form_data and form_data.TypeName == 'Notebook' %}selected{% endif %}>Notebook</option>
+                        <option value="Ultrabook" {% if form_data and form_data.TypeName == 'Ultrabook' %}selected{% endif %}>Ultrabook</option>
+                        <option value="Gaming" {% if form_data and form_data.TypeName == 'Gaming' %}selected{% endif %}>Gaming</option>
+                        <option value="2 in 1 Convertible" {% if form_data and form_data.TypeName == '2 in 1 Convertible' %}selected{% endif %}>2 in 1 Convertible</option>
+                        <option value="Workstation" {% if form_data and form_data.TypeName == 'Workstation' %}selected{% endif %}>Workstation</option>
+                        <option value="Netbook" {% if form_data and form_data.TypeName == 'Netbook' %}selected{% endif %}>Netbook</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Row 2: Screen Size & Resolution -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="Inches">Screen Size (inches) *</label>
+                    <input 
+                        type="number" 
+                        name="Inches" 
+                        id="Inches" 
+                        step="0.1" 
+                        min="10" 
+                        max="18" 
+                        placeholder="e.g., 15.6"
+                        value="{% if form_data %}{{ form_data.Inches }}{% endif %}"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="ScreenResolution">Screen Resolution *</label>
+                    <select name="ScreenResolution" id="ScreenResolution" required>
+                        <option value="">Select Resolution</option>
+                        <option value="1920x1080" {% if form_data and form_data.ScreenResolution == '1920x1080' %}selected{% endif %}>Full HD (1920x1080)</option>
+                        <option value="1366x768" {% if form_data and form_data.ScreenResolution == '1366x768' %}selected{% endif %}>HD (1366x768)</option>
+                        <option value="1600x900" {% if form_data and form_data.ScreenResolution == '1600x900' %}selected{% endif %}>HD+ (1600x900)</option>
+                        <option value="3840x2160" {% if form_data and form_data.ScreenResolution == '3840x2160' %}selected{% endif %}>4K UHD (3840x2160)</option>
+                        <option value="3200x1800" {% if form_data and form_data.ScreenResolution == '3200x1800' %}selected{% endif %}>QHD+ (3200x1800)</option>
+                        <option value="2560x1440" {% if form_data and form_data.ScreenResolution == '2560x1440' %}selected{% endif %}>QHD (2560x1440)</option>
+                        <option value="2560x1600" {% if form_data and form_data.ScreenResolution == '2560x1600' %}selected{% endif %}>WQXGA (2560x1600)</option>
+                        <option value="2304x1440" {% if form_data and form_data.ScreenResolution == '2304x1440' %}selected{% endif %}>2304x1440</option>
+                        <option value="IPS Panel Full HD 1920x1080" {% if form_data and form_data.ScreenResolution == 'IPS Panel Full HD 1920x1080' %}selected{% endif %}>IPS Full HD (1920x1080)</option>
+                        <option value="IPS Panel Retina Display 2560x1600" {% if form_data and form_data.ScreenResolution == 'IPS Panel Retina Display 2560x1600' %}selected{% endif %}>IPS Retina (2560x1600)</option>
+                        <option value="Touchscreen IPS Panel Full HD 1920x1080" {% if form_data and form_data.ScreenResolution == 'Touchscreen IPS Panel Full HD 1920x1080' %}selected{% endif %}>Touchscreen IPS Full HD</option>
+                        <option value="Touchscreen Full HD 1920x1080" {% if form_data and form_data.ScreenResolution == 'Touchscreen Full HD 1920x1080' %}selected{% endif %}>Touchscreen Full HD</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Row 3: CPU & RAM -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="Cpu">Processor (CPU) *</label>
+                    <input 
+                        type="text" 
+                        name="Cpu" 
+                        id="Cpu" 
+                        placeholder="e.g., Intel Core i5 7200U 2.5GHz"
+                        value="{% if form_data %}{{ form_data.Cpu }}{% endif %}"
+                        required
+                    >
+                    <small>Examples: Intel Core i5 7200U, AMD Ryzen 5, Intel Core i7 8550U</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="Ram">RAM (GB) *</label>
+                    <input 
+                        type="number" 
+                        name="Ram" 
+                        id="Ram" 
+                        min="2" 
+                        max="64" 
+                        step="2" 
+                        placeholder="e.g., 8"
+                        value="{% if form_data %}{{ form_data.Ram }}{% endif %}"
+                        required
+                    >
+                    <small>Enter value in GB (e.g., 8, 16, 32)</small>
+                </div>
+            </div>
+
+            <!-- Row 4: Memory & GPU -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="Memory">Storage *</label>
+                    <select name="Memory" id="Memory" required>
+                        <option value="">Select Storage</option>
+                        <option value="128GB SSD" {% if form_data and form_data.Memory == '128GB SSD' %}selected{% endif %}>128GB SSD</option>
+                        <option value="256GB SSD" {% if form_data and form_data.Memory == '256GB SSD' %}selected{% endif %}>256GB SSD</option>
+                        <option value="512GB SSD" {% if form_data and form_data.Memory == '512GB SSD' %}selected{% endif %}>512GB SSD</option>
+                        <option value="1TB SSD" {% if form_data and form_data.Memory == '1TB SSD' %}selected{% endif %}>1TB SSD</option>
+                        <option value="2TB SSD" {% if form_data and form_data.Memory == '2TB SSD' %}selected{% endif %}>2TB SSD</option>
+                        <option value="500GB HDD" {% if form_data and form_data.Memory == '500GB HDD' %}selected{% endif %}>500GB HDD</option>
+                        <option value="1TB HDD" {% if form_data and form_data.Memory == '1TB HDD' %}selected{% endif %}>1TB HDD</option>
+                        <option value="2TB HDD" {% if form_data and form_data.Memory == '2TB HDD' %}selected{% endif %}>2TB HDD</option>
+                        <option value="128GB SSD +  1TB HDD" {% if form_data and form_data.Memory == '128GB SSD +  1TB HDD' %}selected{% endif %}>128GB SSD + 1TB HDD</option>
+                        <option value="256GB SSD +  1TB HDD" {% if form_data and form_data.Memory == '256GB SSD +  1TB HDD' %}selected{% endif %}>256GB SSD + 1TB HDD</option>
+                        <option value="512GB SSD +  1TB HDD" {% if form_data and form_data.Memory == '512GB SSD +  1TB HDD' %}selected{% endif %}>512GB SSD + 1TB HDD</option>
+                        <option value="256GB Flash Storage" {% if form_data and form_data.Memory == '256GB Flash Storage' %}selected{% endif %}>256GB Flash Storage</option>
+                        <option value="512GB Flash Storage" {% if form_data and form_data.Memory == '512GB Flash Storage' %}selected{% endif %}>512GB Flash Storage</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="Gpu">Graphics Card (GPU) *</label>
+                    <input 
+                        type="text" 
+                        name="Gpu" 
+                        id="Gpu" 
+                        placeholder="e.g., Intel HD Graphics 620"
+                        value="{% if form_data %}{{ form_data.Gpu }}{% endif %}"
+                        required
+                    >
+                    <small>Examples: Intel HD Graphics, Nvidia GTX 1050, AMD Radeon</small>
+                </div>
+            </div>
+
+            <!-- Row 5: OS & Weight -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="OpSys">Operating System *</label>
+                    <select name="OpSys" id="OpSys" required>
+                        <option value="">Select OS</option>
+                        <option value="Windows 10" {% if form_data and form_data.OpSys == 'Windows 10' %}selected{% endif %}>Windows 10</option>
+                        <option value="Windows 7" {% if form_data and form_data.OpSys == 'Windows 7' %}selected{% endif %}>Windows 7</option>
+                        <option value="macOS" {% if form_data and form_data.OpSys == 'macOS' %}selected{% endif %}>macOS</option>
+                        <option value="Linux" {% if form_data and form_data.OpSys == 'Linux' %}selected{% endif %}>Linux</option>
+                        <option value="Chrome OS" {% if form_data and form_data.OpSys == 'Chrome OS' %}selected{% endif %}>Chrome OS</option>
+                        <option value="No OS" {% if form_data and form_data.OpSys == 'No OS' %}selected{% endif %}>No OS</option>
+                        <option value="Android" {% if form_data and form_data.OpSys == 'Android' %}selected{% endif %}>Android</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="Weight">Weight (kg) *</label>
+                    <input 
+                        type="number" 
+                        name="Weight" 
+                        id="Weight" 
+                        step="0.01" 
+                        min="0.5" 
+                        max="5" 
+                        placeholder="e.g., 2.5"
+                        value="{% if form_data %}{{ form_data.Weight }}{% endif %}"
+                        required
+                    >
+                    <small>Enter weight in kilograms</small>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="form-actions">
+                <button type="submit" class="btn-predict">🔮 Predict Price</button>
+                <button type="reset" class="btn-reset">🔄 Reset Form</button>
+            </div>
+        </form>
+
+        <footer>
+            <p>Powered by Machine Learning | Built with FastAPI & Python</p>
+        </footer>
+    </div>
+
+    <script>
+        // Add form validation feedback
+        const form = document.querySelector('.prediction-form');
+        
+        form.addEventListener('submit', function(e) {
+            const submitBtn = form.querySelector('.btn-predict');
+            submitBtn.innerHTML = '⏳ Predicting...';
+            submitBtn.disabled = true;
+        });
+
+        // Reset button handler
+        const resetBtn = form.querySelector('.btn-reset');
+        resetBtn.addEventListener('click', function() {
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 100);
+        });
+    </script>
+</body>
+</html>

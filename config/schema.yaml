@@ -48,3 +48,19 @@ categorical_features:
   - Cpu_Category
   - Gpu_category
   - categorize_opsys
+
+
+
+columns_after_transformation_for_prediction:
+  - Ram
+  - Weight
+  - ppi
+  - Touchscreen
+  - IPS
+  - Cpu_Category
+  - SSD
+  - HDD
+  - Flash_Storage
+  - Hybrid
+  - Gpu_category
+  - categorize_opsys
